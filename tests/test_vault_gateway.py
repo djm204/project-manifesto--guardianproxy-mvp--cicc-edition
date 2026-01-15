@@ -3,9 +3,16 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pytest
-from proxy import vault_gateway
+from proxy.vault_gateway import process_request, process_response
 
-def test_vault_gateway():
-    """Test that vault gateway functions correctly."""
-    # Mock a request and response here, then test the gateway's functionality
-    # Ensure the response is correctly anonymized and tokenized
+def test_process_request():
+    """Test that process_request function works correctly."""
+    mock_request = {"data": "mock_request_data"}
+    expected_output = {"data": "processed_mock_request_data"}
+    assert process_request(mock_request) == expected_output
+
+def test_process_response():
+    """Test that process_response function works correctly."""
+    mock_response = {"data": "mock_response_data"}
+    expected_output = {"data": "de-masked_mock_response_data"}
+    assert process_response(mock_response) == expected_output
