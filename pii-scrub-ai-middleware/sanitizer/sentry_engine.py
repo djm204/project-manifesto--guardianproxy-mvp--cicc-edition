@@ -1,15 +1,25 @@
-from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
-from presidio_analyzer.nlp_engine import NlpEngineProvider
+from presidio_analyzer import AnalyzerEngine
+from presidio_anomaly_detector import AnomalyDetector
+from custom_recognizers import SinRecognizer, UciRecognizer
 
-def sanitize_pii(input_text):
-    nlp_engine_provider = NlpEngineProvider(nlp_artifacts_store=None)
-    nlp_engine = nlp_engine_provider.create_engine('en')
-    recognizer_registry = RecognizerRegistry()
-    analyzer = AnalyzerEngine(nlp_engine=nlp_engine, recognizer_registry=recognizer_registry)
-    analyzer_results = analyzer.analyze(correlation_id=0, text=input_text, entities=[], language='en')
-    masked_string = input_text
+analyzer = AnalyzerEngine()
+anomaly_detector = AnomalyDetector()
+
+analyzer.registry.add_recognizer(SinRecognizer())
+analyzer.registry.add_recognizer(UciRecognizer())
+
+def sanitize_pii(text):
+    """Sanitize PII from given text."""
+    analysis_results = analyzer.analyze(text=text, language='en')
+    anomalies = anomaly_detector.detect_anomalies(results=analysis_results)
+    
+    sanitized_text = text
     token_mapping = {}
-    for result in analyzer_results:
-        masked_string = masked_string.replace(result.text, "{{CLIENT_" + str(result.start) + "}}")
-        token_mapping["{{CLIENT_" + str(result.start) + "}}"] = result.text
-    return masked_string, token_mapping
+    
+    for result in analysis_results:
+        pii = result.entity_text
+        token = "{{CLIENT_" + str(len(token_mapping) + 1) + "}}"
+        sanitized_text = sanitized_text.replace(pii, token)
+        token_mapping[token] = pii
+        
+    return sanitized_text, token_mapping

@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pytest
-from pii_scrub_ai_middleware.sanitizer.sentry_engine import sanitize_pii
+from sanitizer.sentry_engine import sanitize_pii
 
 def test_sanitize_pii():
     """Test that sanitize_pii function works correctly."""

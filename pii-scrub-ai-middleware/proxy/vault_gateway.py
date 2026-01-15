@@ -1,26 +1,23 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from pii_scrub_ai_middleware.sanitizer.sentry_engine import sanitize_pii
-import aioredis
-import os
+from redis import Redis
+import sanitizer
 
 app = FastAPI()
+redis = Redis(host='localhost', port=6379, db=0)
 
 @app.middleware("http")
-async def dispatch(request: Request, call_next):
-    if request.url.path == "/v1/chat/completions":
-        body = await request.json()
-        sanitized_prompt, token_mapping = sanitize_pii(body['prompt'])
-        redis = await aioredis.from_url("redis://localhost")
-        await redis.set(body['id'], token_mapping)
-        body['prompt'] = sanitized_prompt
-        request._body = body
+async def sanitize_middleware(request: Request, call_next):
+    """FastAPI middleware to sanitize PII from the request."""
+    sanitized_text, token_mapping = sanitizer.sanitize_pii(request.body())
+    
+    key = request.headers.get('X-Request-ID')
+    redis.set(key, token_mapping, ex=1800)
+    
+    request._body = sanitized_text
     response = await call_next(request)
-    if response.status_code == 200 and request.url.path == "/v1/chat/completions":
-        body = response.body
-        redis = await aioredis.from_url("redis://localhost")
-        token_mapping = await redis.get(request.json()['id'])
-        for token, pii in token_mapping.items():
-            body = body.replace(token, pii)
-        response.body = body
+    
+    token_mapping = redis.get(key)
+    for token, pii in token_mapping.items():
+        response.body = response.body.replace(token, pii)
+    
     return response
