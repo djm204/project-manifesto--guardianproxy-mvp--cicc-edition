@@ -1,0 +1,1 @@
+For **Task 1: The Sentry Engine (PII Logic)**, we need to create a module `sentry_engine.py` that uses Microsoft Presidio and custom regex for Canadian SINs and UCIs. Here's a skeleton for the `sentry_engine.py`:
