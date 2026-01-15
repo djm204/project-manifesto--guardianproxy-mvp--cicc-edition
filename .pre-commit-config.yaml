@@ -1,0 +1,22 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.4.0
+  hooks:
+  - id: check-added-large-files
+  - id: check-merge-conflict
+  - id: check-yaml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+- repo: https://github.com/pre-commit/mirrors-pylint
+  rev: v2.9.6
+  hooks:
+  - id: pylint
+    args: [--ignore=tests/]
+- repo: local
+  hooks:
+  - id: pytest-check
+    name: pytest
+    entry: pytest
+    language: system
+    types: [python]
+    pass_filenames: false
