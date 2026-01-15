@@ -1,1 +1,1 @@
-**Test for Re-Hydration Engine**
+To run these tests, we will use the pytest command from the root directory of our application.

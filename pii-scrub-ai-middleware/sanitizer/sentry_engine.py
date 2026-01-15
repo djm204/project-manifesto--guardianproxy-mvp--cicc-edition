@@ -1,16 +1,15 @@
-import re
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
-from presidio_analyzer.predefined_recognizers import PatternRecognizer
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 
-def sanitize_pii(text: str) -> tuple:
-    recognizers = [PatternRecognizer(supported_entity="CA_SIN", patterns=["[0-9]{3} [0-9]{3} [0-9]{3}", "[0-9]{9}"]),
-                   PatternRecognizer(supported_entity="CA_UCI", patterns=["[0-9]{8}", "[0-9]{10}"])]
-    analyzer = AnalyzerEngine(registry=RecognizerRegistry(recognizers=recognizers))
-    analyzer_results = analyzer.analyze(text, entities=["CA_SIN", "CA_UCI"], language="en")
-    sanitized_text = text
+def sanitize_pii(input_text):
+    nlp_engine_provider = NlpEngineProvider(nlp_artifacts_store=None)
+    nlp_engine = nlp_engine_provider.create_engine('en')
+    recognizer_registry = RecognizerRegistry()
+    analyzer = AnalyzerEngine(nlp_engine=nlp_engine, recognizer_registry=recognizer_registry)
+    analyzer_results = analyzer.analyze(correlation_id=0, text=input_text, entities=[], language='en')
+    masked_string = input_text
     token_mapping = {}
     for result in analyzer_results:
-        token = f"{{{{CLIENT_{len(token_mapping)+1}}}}}"
-        sanitized_text = sanitized_text.replace(result.text, token)
-        token_mapping[token] = result.text
-    return sanitized_text, token_mapping
+        masked_string = masked_string.replace(result.text, "{{CLIENT_" + str(result.start) + "}}")
+        token_mapping["{{CLIENT_" + str(result.start) + "}}"] = result.text
+    return masked_string, token_mapping
